@@ -57,3 +57,16 @@
 
 使用者可根據 `queries.json` 提供的查詢與 `qrels.json` 的相關度標註，在 `corpus.json` 建立索引或進行檢索實驗。各類型資料夾提供的結構一致，可依需求選擇特定犯罪類型進行研究。
 
+
+## BM25 檢索範例
+
+檢索流程分為離線索引建立與線上查詢兩步。
+
+```bash
+# 建立索引
+python build_bm25_index.py data/fraud fraud_index.json
+# 讀取索引執行查詢
+python bm25_retrieval.py fraud_index.json "被告明知詐欺集團成員" 3
+```
+
+上述指令會先在 `data/fraud` 產生 `fraud_index.json`，再以該索引取得前 3 筆相似文件編號與分數。
