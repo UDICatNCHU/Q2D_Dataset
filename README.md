@@ -86,3 +86,21 @@ uv pip install -r requirements.txt
 ```
 
 完成後即可在 `.venv` 環境中執行範例程式。
+
+## MCP 伺服器
+
+本資料庫提供 `mcp_server.py` 作為簡易 [MCP](https://github.com/UDICatNCHU/mcp) 伺服器實作，
+透過 BM25 搜尋工具回應查詢。此程式需 Python 3.10 以上版本才能順利執行，
+可在虛擬環境啟用後以下列指令啟動：
+
+```bash
+python mcp_server.py
+```
+
+啟動後即會在標準輸入輸出介面等待請求，範例如下：
+
+```bash
+echo '{"tool": "test"}' | python mcp_server.py
+```
+
+此指令會回傳伺服器狀態確認訊息。
