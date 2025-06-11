@@ -1,4 +1,3 @@
-
 """BM25 retrieval using prebuilt index.
 
 Usage:
@@ -9,6 +8,7 @@ INDEX_FILE should be built with build_bm25_index.py.
 import json
 from collections import Counter
 import sys
+from pathlib import Path  # 加入缺少的 import
 
 
 class BM25Retriever:
@@ -18,6 +18,7 @@ class BM25Retriever:
         # ensure idf values are floats
         self.idf = {k: float(v) for k, v in index["idf"].items()}
         self.avgdl = index["avgdl"]
+        self.N = len(self.docs)  # 加入缺少的 N 屬性
 
         self.k1 = k1
         self.b = b
@@ -46,6 +47,10 @@ class BM25Retriever:
             scores.append((self.score(q_tokens, idx), self.doc_ids[idx]))
         scores.sort(key=lambda x: x[0], reverse=True)
         return scores[:top_k]
+
+def load_index(index_file):
+    with open(index_file, 'r', encoding='utf-8') as f:
+        return json.load(f)
 
 def load_corpus(data_dir):
     path = Path(data_dir) / "format" / "corpus.json"
