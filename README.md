@@ -71,3 +71,18 @@ python bm25_retrieval.py fraud_index.json "被告明知詐欺集團成員" 3
 
 上述指令會先在 `data/fraud` 產生 `fraud_index.json`，再以該索引取得前 3 筆相似文件編號與分數。
 
+
+## 虛擬環境 (uv)
+
+本專案支援使用 [uv](https://github.com/astral-sh/uv) 建立 Python 虛擬環境。首次使用時可透過下列指令建立並安裝依賴：
+
+```bash
+# 安裝 uv (若尚未安裝)
+pip install uv
+# 在專案根目錄建立 .venv 環境
+uv venv .venv
+# 安裝依賴 (本專案目前僅使用標準函式庫，無需額外套件)
+uv pip install -r requirements.txt
+```
+
+完成後即可在 `.venv` 環境中執行範例程式。
