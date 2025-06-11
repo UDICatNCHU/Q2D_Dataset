@@ -60,10 +60,14 @@
 
 ## BM25 檢索範例
 
-本庫提供 `bm25_retrieval.py` 腳本，能以 BM25 公式對 `corpus.json` 執行簡易檢索。
+檢索流程分為離線索引建立與線上查詢兩步
 
 ```bash
-python bm25_retrieval.py data/fraud "被告明知詐欺集團成員" 3
+# 建立索引
+python build_bm25_index.py data/fraud fraud_index.json
+# 讀取索引執行查詢
+python bm25_retrieval.py fraud_index.json "被告明知詐欺集團成員" 3
 ```
 
-上述指令將在 `data/fraud` 的文件中，以輸入的查詢句取得前 3 筆相似文件編號與分數。
+上述指令會先在 `data/fraud` 產生 `fraud_index.json`，再以該索引取得前 3 筆相似文件編號與分數。
+
