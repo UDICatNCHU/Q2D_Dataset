@@ -94,13 +94,7 @@ uv pip install -r requirements.txt
 可在虛擬環境啟用後以下列指令啟動：
 
 ```bash
-python mcp_server.py
-```
-
-啟動後即會在標準輸入輸出介面等待請求，範例如下：
-
-```bash
-echo '{"tool": "test"}' | python mcp_server.py
+uv run mcp install mcp_server.py
 ```
 
 此指令會回傳伺服器狀態確認訊息。
