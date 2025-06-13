@@ -53,13 +53,16 @@ def main():
     print(f"Accuracy: {accuracy:.4f}")
     print(f"MRR: {mrr:.4f}")
 
-    # print top-3 results with ground truth for each query
+    # print top-k results with ground truth for each query
     for q in queries:
         qid = q["id"]
-        top_docs = preds_map.get(qid, [])[:3]
+        top_docs = preds_map.get(qid, [])[:top_k]
         gt = qrels_map.get(qid)
-        print(f"Q{qid}: top-3 {top_docs} | truth {gt}")
+        print(f"Q{qid}: top-{top_k} {top_docs} | truth {gt}")
 
+
+"python evaluate_bm25.py"
+"python evaluate_bm25.py --top_k 20"
 
 if __name__ == '__main__':
     main()
