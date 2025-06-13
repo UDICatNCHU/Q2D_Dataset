@@ -61,6 +61,13 @@ with open(_QUERIES_PATH, "r", encoding="utf-8") as f:
 
 _QRELS = load_qrels(str(_QRELS_PATH))
 
+@mcp.tool()
+def read_fraud_data() -> List[Dict[str, object]]:
+    """Return the fraud judgment summary dataset."""
+    path = _CORPUS_DIR / "fraud_judgment_summary.json"
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
 
 @mcp.tool()
 def test() -> str:
