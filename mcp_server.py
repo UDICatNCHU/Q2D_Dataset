@@ -4,6 +4,7 @@ from typing import List, Dict
 import sys
 
 from bm25_retrieval import BM25Retriever, load_index, load_corpus
+from score import load_qrels, compute_scores
 
 
 try:
@@ -52,6 +53,13 @@ _CORPUS_DIR = Path("data") / "fraud"
 _INDEX = load_index(_INDEX_PATH)
 _BM25 = BM25Retriever(_INDEX)
 _DOCS = {doc["id"]: doc["text"] for doc in load_corpus(str(_CORPUS_DIR))}
+_QUERIES_PATH = _CORPUS_DIR / "format" / "queries.json"
+_QRELS_PATH = _CORPUS_DIR / "format" / "qrels.json"
+
+with open(_QUERIES_PATH, "r", encoding="utf-8") as f:
+    _QUERIES = json.load(f)
+
+_QRELS = load_qrels(str(_QRELS_PATH))
 
 
 @mcp.tool()
@@ -68,6 +76,17 @@ def search(query: str, top_k: int = 5) -> List[Dict[str, object]]:
         {"doc_id": doc_id, "score": score, "text": _DOCS.get(doc_id, "")}
         for score, doc_id in results
     ]
+
+
+@mcp.tool()
+def evaluate_fraud(top_k: int = 10) -> Dict[str, float]:
+    """Run BM25 on fraud queries and return average scores."""
+    preds = {}
+    for q in _QUERIES:
+        res = _BM25.query(q["text"], top_k)
+        preds[q["id"]] = [doc_id for score, doc_id in res]
+    accuracy, mrr = compute_scores(_QRELS, preds)
+    return {"accuracy": accuracy, "mrr": mrr}
 
 
 if __name__ == "__main__":
