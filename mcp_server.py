@@ -1,7 +1,9 @@
 import json
+import os
 from pathlib import Path
 from typing import List, Dict
 import sys
+import google.generativeai as genai
 
 from bm25_retrieval import BM25Retriever, load_index, load_corpus
 from score import load_qrels, compute_scores
@@ -56,6 +58,16 @@ _DOCS = {doc["id"]: doc["text"] for doc in load_corpus(str(_CORPUS_DIR))}
 _QUERIES_PATH = _CORPUS_DIR / "format" / "queries.json"
 _QRELS_PATH = _CORPUS_DIR / "format" / "qrels.json"
 
+# Configure Gemini model for query expansion
+_GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+_GEMINI_MODEL = None
+if _GEMINI_API_KEY:
+    try:
+        genai.configure(api_key=_GEMINI_API_KEY)
+        _GEMINI_MODEL = genai.GenerativeModel("gemini-2.0-flash")
+    except Exception:
+        _GEMINI_MODEL = None
+
 with open(_QUERIES_PATH, "r", encoding="utf-8") as f:
     _QUERIES = json.load(f)
 
@@ -83,6 +95,29 @@ def search(query: str, top_k: int = 5) -> List[Dict[str, object]]:
         {"doc_id": doc_id, "score": score, "text": _DOCS.get(doc_id, "")}
         for score, doc_id in results
     ]
+
+
+@mcp.tool()
+def expand_search(query: str, top_k: int = 5) -> Dict[str, object]:
+    """Expand the query using Gemini then search the fraud dataset."""
+    if not _GEMINI_MODEL:
+        raise RuntimeError("Gemini model is not configured")
+
+    prompt = (
+        "請擴充以下查詢，列出可能的同義詞或相關關鍵字，以空格分隔：" f"{query}"
+    )
+    try:
+        resp = _GEMINI_MODEL.generate_content(prompt)
+        expanded = resp.text.strip()
+    except Exception as e:
+        raise RuntimeError(f"Gemini expansion failed: {e}")
+
+    results = _BM25.query(expanded, top_k)
+    formatted = [
+        {"doc_id": doc_id, "score": score, "text": _DOCS.get(doc_id, "")}
+        for score, doc_id in results
+    ]
+    return {"expanded_query": expanded, "results": formatted}
 
 
 @mcp.tool()
