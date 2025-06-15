@@ -152,24 +152,21 @@ class GeminiMCPAgent:
 你有以下可用的工具：
 {tools_desc}
 
-通常請先使用 `search` 工具檢索，觀察結果後如有需要再使用
-`expand_search` 透過 Gemini 擴充查詢後重新搜尋。
+請根據使用者的問題，判斷是否需要使用這些工具。
 
-請根據使用者的問題，判斷是否需要使用這些工具。如果需要使用工具，請以 JSON 格式回應：
-{{
-    "action": "use_tool",
-    "tool": "工具名稱",
-    "args": {{"參數名": "參數值"}},
-    "reasoning": "為什麼要使用這個工具的原因"
-}}
+**重要：你必須嚴格按照以下 JSON 格式回應，不要添加任何其他文字：**
 
-如果不需要使用工具，請直接回答使用者的問題：
-{{
-    "action": "respond",
-    "response": "你的回答"
-}}
+如果需要使用工具：
+{{"action": "use_tool", "tool": "工具名稱", "args": {{"參數名": "參數值"}}, "reasoning": "使用原因"}}
 
-請用繁體中文回應。"""
+如果不需要使用工具：
+{{"action": "respond", "response": "你的回答"}}
+
+例子：
+- 使用者問「詐欺資料集有多少筆資料？」→ {{"action": "use_tool", "tool": "read_fraud_data", "args": {{}}, "reasoning": "需要讀取資料集來計算筆數"}}
+- 使用者問「什麼是詐欺？」→ {{"action": "respond", "response": "詐欺是指..."}}
+
+請只回傳 JSON，不要包含其他說明文字."""
 
     def _analyze_user_input(self, user_input: str) -> Dict[str, Any]:
         """分析使用者輸入並決定是否需要使用工具"""
@@ -203,6 +200,13 @@ class GeminiMCPAgent:
                 generation_config=generation_config
             )
             
+            # 檢查回應是否有內容
+            if not response or not hasattr(response, 'text') or not response.text:
+                return {
+                    "action": "respond",
+                    "response": "抱歉，我無法處理您的請求。"
+                }
+            
             # 嘗試解析 JSON 回應
             response_text = response.text.strip()
             
@@ -212,15 +216,30 @@ class GeminiMCPAgent:
             if response_text.endswith("```"):
                 response_text = response_text[:-3]
             
-            return json.loads(response_text)
+            response_text = response_text.strip()
             
-        except json.JSONDecodeError:
+            # 嘗試解析 JSON
+            parsed_response = json.loads(response_text)
+            
+            # 驗證回應格式
+            if "action" not in parsed_response:
+                return {
+                    "action": "respond",
+                    "response": response.text
+                }
+            
+            return parsed_response
+            
+        except json.JSONDecodeError as e:
+            print(f"🔧 JSON 解析失敗: {str(e)}")
+            print(f"🔧 原始回應: {response_text if 'response_text' in locals() else 'N/A'}")
             # 如果無法解析 JSON，假設是直接回應
             return {
                 "action": "respond",
-                "response": response.text if hasattr(response, 'text') else str(response)
+                "response": response.text if 'response' in locals() and hasattr(response, 'text') else "抱歉，我無法處理您的請求。"
             }
         except Exception as e:
+            print(f"🔧 處理請求時發生錯誤: {str(e)}")
             return {
                 "action": "respond",
                 "response": f"抱歉，我在處理您的請求時遇到了問題：{str(e)}"
@@ -286,23 +305,28 @@ class GeminiMCPAgent:
         """處理使用者輸入並回應"""
         print(f"🤔 分析中...")
         
-        # 分析使用者輸入
-        analysis = self._analyze_user_input(user_input)
-        
-        if analysis["action"] == "use_tool":
-            tool_name = analysis["tool"]
-            args = analysis.get("args", {})
-            reasoning = analysis.get("reasoning", "")
+        try:
+            # 分析使用者輸入
+            analysis = self._analyze_user_input(user_input)
+            print(f"🔧 分析結果: {analysis}")  # 除錯用
             
-            print(f"🔧 準備使用工具: {tool_name}")
-            if reasoning:
-                print(f"💭 原因: {reasoning}")
-            
-            # 執行工具
-            tool_result = self._execute_tool(tool_name, args)
-            
-            # 讓 Gemini 解釋結果
-            explain_prompt = f"""
+            if analysis.get("action") == "use_tool":
+                tool_name = analysis.get("tool")
+                args = analysis.get("args", {})
+                reasoning = analysis.get("reasoning", "")
+                
+                if not tool_name:
+                    return "❌ 無法識別要使用的工具"
+                
+                print(f"🔧 準備使用工具: {tool_name}")
+                if reasoning:
+                    print(f"💭 原因: {reasoning}")
+                
+                # 執行工具
+                tool_result = self._execute_tool(tool_name, args)
+                
+                # 讓 Gemini 解釋結果
+                explain_prompt = f"""
 根據以下工具執行結果，請用自然語言向使用者解釋：
 
 使用者問題：{user_input}
@@ -310,25 +334,29 @@ class GeminiMCPAgent:
 
 請提供清楚、有用的解釋。
 """
+                
+                try:
+                    explanation = self.model.generate_content(explain_prompt)
+                    final_response = f"{tool_result}\n\n💡 {explanation.text}"
+                except Exception as e:
+                    print(f"🔧 解釋結果時發生錯誤: {str(e)}")
+                    final_response = tool_result
+                
+            else:
+                final_response = analysis.get("response", "抱歉，我無法處理您的請求。")
             
-            try:
-                explanation = self.model.generate_content(explain_prompt)
-                final_response = f"{tool_result}\n\n💡 {explanation.text}"
-            except:
-                final_response = tool_result
+            # 記錄對話歷史
+            self.conversation_history.append({
+                "user": user_input,
+                "assistant": final_response
+            })
             
-        else:
-            final_response = analysis["response"]
-        
-        # 記錄對話歷史
-        self.conversation_history.append({
-            "user": user_input,
-            "assistant": final_response
-        })
-        
-        return final_response
-
-
+            return final_response
+            
+        except Exception as e:
+            print(f"🔧 處理對話時發生錯誤: {str(e)}")
+            return f"❌ 處理請求時發生錯誤：{str(e)}"
+    
 def main():
     """主程式"""
     # 檢查 API 金鑰
