@@ -1,60 +1,10 @@
 import json
-import subprocess
-import sys
 import os
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 import google.generativeai as genai
 
+from mcp_client import MCPClient
 
-class MCPClient:
-    """簡單的 MCP 客戶端，透過 stdio 與 MCP 伺服器通訊"""
-    
-    def __init__(self, server_script: str):
-        self.server_script = server_script
-        self.process = None
-        
-    def __enter__(self):
-        """啟動伺服器程序"""
-        self.process = subprocess.Popen(
-            [sys.executable, self.server_script],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            bufsize=0
-        )
-        
-        # 讀取伺服器啟動訊息
-        ready_msg = self.process.stdout.readline()
-        print(f"🚀 {ready_msg.strip()}")
-        return self
-        
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """關閉伺服器程序"""
-        if self.process:
-            self.process.terminate()
-            self.process.wait()
-            
-    def call_tool(self, tool: str, args: Dict[str, Any] = None) -> Dict[str, Any]:
-        """呼叫 MCP 工具"""
-        if not self.process:
-            raise RuntimeError("客戶端未啟動")
-            
-        request = {
-            "tool": tool,
-            "args": args or {}
-        }
-        
-        # 發送請求
-        request_json = json.dumps(request) + "\n"
-        self.process.stdin.write(request_json)
-        self.process.stdin.flush()
-        
-        # 讀取回應
-        response_line = self.process.stdout.readline()
-        response = json.loads(response_line)
-        
-        return response
 
 
 class GeminiMCPAgent:
