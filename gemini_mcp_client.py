@@ -129,8 +129,11 @@ class GeminiMCPAgent:
                 }
             },
             "read_fraud_data": {
-                "description": "讀取完整的詐欺判決摘要資料集",
-                "parameters": {}
+                "description": "讀取詐欺判決摘要資料集，可指定 offset 與 limit",
+                "parameters": {
+                    "offset": "起始索引，預設 0",
+                    "limit": "最多返回的筆數，預設為全部"
+                }
             },
             "evaluate_fraud": {
                 "description": "評估 BM25 在詐欺查詢上的效能",
@@ -162,8 +165,8 @@ class GeminiMCPAgent:
 如果不需要使用工具：
 {{"action": "respond", "response": "你的回答"}}
 
-例子：
-- 使用者問「詐欺資料集有多少筆資料？」→ {{"action": "use_tool", "tool": "read_fraud_data", "args": {{}}, "reasoning": "需要讀取資料集來計算筆數"}}
+- 例子：
+- 使用者問「詐欺資料集有多少筆資料？」→ {{"action": "use_tool", "tool": "read_fraud_data", "args": {"offset": 0, "limit": 0}, "reasoning": "需要讀取資料集來計算筆數"}}
 - 使用者問「什麼是詐欺？」→ {{"action": "respond", "response": "詐欺是指..."}}
 
 請只回傳 JSON，不要包含其他說明文字."""
@@ -288,7 +291,7 @@ class GeminiMCPAgent:
                 return "\n".join(formatted_results)
             
             elif tool_name == "read_fraud_data":
-                return f"📊 詐欺資料集包含 {len(result)} 筆記錄"
+                return f"📊 取得 {len(result)} 筆詐欺資料記錄"
             
             elif tool_name == "evaluate_fraud":
                 return (f"📈 評估結果：\n"

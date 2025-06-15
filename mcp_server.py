@@ -74,11 +74,26 @@ with open(_QUERIES_PATH, "r", encoding="utf-8") as f:
 _QRELS = load_qrels(str(_QRELS_PATH))
 
 @mcp.tool()
-def read_fraud_data() -> List[Dict[str, object]]:
-    """Return the fraud judgment summary dataset."""
+def read_fraud_data(offset: int = 0, limit: int | None = None) -> List[Dict[str, object]]:
+    """Return a slice of the fraud judgment summary dataset.
+
+    Parameters
+    ----------
+    offset: int, optional
+        Starting index of records to return. Defaults to ``0``.
+    limit: int | None, optional
+        Maximum number of records to return. ``None`` will return all
+        records after ``offset``.
+    """
     path = _CORPUS_DIR / "fraud_judgment_summary.json"
     with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+
+    if offset < 0:
+        offset = 0
+    if limit is None or limit <= 0:
+        return data[offset:]
+    return data[offset : offset + limit]
 
 
 @mcp.tool()
