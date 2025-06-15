@@ -150,6 +150,12 @@ class GeminiMCPAgent:
             for name, info in self.available_tools.items()
         ])
 
+        # 將 JSON 範例分開處理，避免 f-string 中的大括號問題
+        json_example_1 = '{"action": "use_tool", "tool": "工具名稱", "args": {"參數名": "參數值"}, "reasoning": "使用原因"}'
+        json_example_2 = '{"action": "respond", "response": "你的回答"}'
+        json_example_3 = '{"action": "use_tool", "tool": "read_fraud_data", "args": {"offset": 0, "limit": 0}, "reasoning": "需要讀取資料集來計算筆數"}'
+        json_example_4 = '{"action": "respond", "response": "詐欺是指..."}'
+
         return f"""你是一個智能助手，可以幫助使用者查詢和分析詐欺相關資料。
 
 你有以下可用的工具：
@@ -160,14 +166,14 @@ class GeminiMCPAgent:
 **重要：你必須嚴格按照以下 JSON 格式回應，不要添加任何其他文字：**
 
 如果需要使用工具：
-{{"action": "use_tool", "tool": "工具名稱", "args": {{"參數名": "參數值"}}, "reasoning": "使用原因"}}
+{json_example_1}
 
 如果不需要使用工具：
-{{"action": "respond", "response": "你的回答"}}
+{json_example_2}
 
 - 例子：
-- 使用者問「詐欺資料集有多少筆資料？」→ {{"action": "use_tool", "tool": "read_fraud_data", "args": {"offset": 0, "limit": 0}, "reasoning": "需要讀取資料集來計算筆數"}}
-- 使用者問「什麼是詐欺？」→ {{"action": "respond", "response": "詐欺是指..."}}
+- 使用者問「詐欺資料集有多少筆資料？」→ {json_example_3}
+- 使用者問「什麼是詐欺？」→ {json_example_4}
 
 請只回傳 JSON，不要包含其他說明文字."""
 
@@ -268,10 +274,13 @@ class GeminiMCPAgent:
 
                 formatted_results = ["🔍 搜尋結果："]
                 for i, item in enumerate(result[:5], 1):
+                    text_preview = item['text'][:200]
+                    if len(item['text']) > 200:
+                        text_preview += '...'
                     formatted_results.append(
                         f"\n{i}. 文件ID: {item['doc_id']}"
                         f"\n   相關度: {item['score']:.4f}"
-                        f"\n   內容: {item['text'][:200]}{'...' if len(item['text']) > 200 else ''}\n"
+                        f"\n   內容: {text_preview}\n"
                     )
                 return "\n".join(formatted_results)
 
@@ -283,10 +292,13 @@ class GeminiMCPAgent:
 
                 formatted_results = [f"🔍 擴充後查詢：{expanded_query}"]
                 for i, item in enumerate(results[:5], 1):
+                    text_preview = item['text'][:200]
+                    if len(item['text']) > 200:
+                        text_preview += '...'
                     formatted_results.append(
                         f"\n{i}. 文件ID: {item['doc_id']}"
                         f"\n   相關度: {item['score']:.4f}"
-                        f"\n   內容: {item['text'][:200]}{'...' if len(item['text']) > 200 else ''}\n"
+                        f"\n   內容: {text_preview}\n"
                     )
                 return "\n".join(formatted_results)
             
