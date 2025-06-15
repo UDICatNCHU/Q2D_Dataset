@@ -98,3 +98,25 @@ uv run mcp install mcp_server.py
 ```
 
 此指令會回傳伺服器狀態確認訊息。
+
+## Gemini MCP 客戶端
+
+若要使用 `gemini_mcp_client.py` 啟動智能助手，請先設定 Google Gemini API 金鑰。建議在專案根目錄建立 `.env` 檔並填入：
+
+```bash
+echo "GEMINI_API_KEY=你的金鑰" > .env
+```
+
+或直接匯出環境變數：
+
+```bash
+export GEMINI_API_KEY=你的金鑰
+```
+
+完成設定後即可啟動客戶端：
+
+```bash
+python gemini_mcp_client.py
+```
+
+`.env` 檔已加入 `.gitignore`，不會被納入版本控管。
