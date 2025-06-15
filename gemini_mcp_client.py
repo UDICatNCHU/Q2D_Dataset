@@ -121,6 +121,13 @@ class GeminiMCPAgent:
                     "top_k": "返回的結果數量 (預設: 5)"
                 }
             },
+            "expand_search": {
+                "description": "使用 Gemini 擴充查詢後再搜尋",
+                "parameters": {
+                    "query": "搜尋查詢字串",
+                    "top_k": "返回的結果數量 (預設: 5)"
+                }
+            },
             "read_fraud_data": {
                 "description": "讀取完整的詐欺判決摘要資料集",
                 "parameters": {}
@@ -139,11 +146,14 @@ class GeminiMCPAgent:
             f"- {name}: {info['description']}"
             for name, info in self.available_tools.items()
         ])
-        
+
         return f"""你是一個智能助手，可以幫助使用者查詢和分析詐欺相關資料。
 
 你有以下可用的工具：
 {tools_desc}
+
+通常請先使用 `search` 工具檢索，觀察結果後如有需要再使用
+`expand_search` 透過 Gemini 擴充查詢後重新搜尋。
 
 請根據使用者的問題，判斷是否需要使用這些工具。如果需要使用工具，請以 JSON 格式回應：
 {{
@@ -233,9 +243,24 @@ class GeminiMCPAgent:
             elif tool_name == "search":
                 if not result:
                     return "🔍 沒有找到相關結果"
-                
+
                 formatted_results = ["🔍 搜尋結果："]
                 for i, item in enumerate(result[:5], 1):
+                    formatted_results.append(
+                        f"\n{i}. 文件ID: {item['doc_id']}"
+                        f"\n   相關度: {item['score']:.4f}"
+                        f"\n   內容: {item['text'][:200]}{'...' if len(item['text']) > 200 else ''}\n"
+                    )
+                return "\n".join(formatted_results)
+
+            elif tool_name == "expand_search":
+                results = result.get("results", [])
+                expanded_query = result.get("expanded_query", "")
+                if not results:
+                    return f"🔍 擴充後查詢：{expanded_query}\n沒有找到相關結果"
+
+                formatted_results = [f"🔍 擴充後查詢：{expanded_query}"]
+                for i, item in enumerate(results[:5], 1):
                     formatted_results.append(
                         f"\n{i}. 文件ID: {item['doc_id']}"
                         f"\n   相關度: {item['score']:.4f}"

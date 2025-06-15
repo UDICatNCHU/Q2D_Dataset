@@ -93,11 +93,15 @@ uv pip install -r requirements.txt
 透過 BM25 搜尋工具回應查詢。此程式需 Python 3.10 以上版本才能順利執行，
 可在虛擬環境啟用後以下列指令啟動：
 
-```bash
-uv run mcp install mcp_server.py
-```
+ ```bash
+ uv run mcp install mcp_server.py
+ ```
 
 此指令會回傳伺服器狀態確認訊息。
+
+伺服器新增 `expand_search` 工具，可利用 Gemini 擴充查詢後再執行 BM25 搜尋，
+預設使用 `gemini-2.0-flash` 模型。建議先使用 `search` 觀察檢索結果，
+若結果不足再呼叫 `expand_search`。呼叫時需提供 `query` 與可選的 `top_k` 參數。
 
 ## Gemini MCP 客戶端
 
