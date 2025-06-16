@@ -54,7 +54,10 @@
             strong.className = 'text-success';
             strong.textContent = `${sender}: `;
             p.appendChild(strong);
-            typeText(p, text);
+            const span = document.createElement('span');
+            p.appendChild(span);
+            typeText(span, text);
+
         } else {
             p.innerHTML = `<strong class="text-danger">${sender}:</strong> ${text}`;
         }
@@ -65,6 +68,7 @@
     function typeText(el, text, idx = 0) {
         if (idx < text.length) {
             el.textContent += text[idx];
+            chatBox.scrollTop = chatBox.scrollHeight;
             setTimeout(() => typeText(el, text, idx + 1), 30);
         }
     }
