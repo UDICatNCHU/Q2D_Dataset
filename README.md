@@ -134,13 +134,16 @@ python gemini_mcp_client.py
 
 ## 簡易網頁介面
 
-本專案提供 `web_server.py` 以 Flask 建立簡易的查詢網頁。啟動後即可透過瀏覽器輸入查詢並取得檢索結果。
+
+`web_server.py` 提供一個基於 Flask 的聊天頁面，可與 Gemini 智能助手互動。啟動前請先設定 `GEMINI_API_KEY` 環境變數。
 
 ```bash
 # 安裝相依套件
 pip install -r requirements.txt
-# 啟動伺服器
+# 設定金鑰並啟動伺服器
+export GEMINI_API_KEY=your_key
 python web_server.py
 ```
 
-預設會在 <http://localhost:8000/> 提供網頁介面。
+啟動後瀏覽 <http://localhost:8000/> 即可進行對話，詢問資料集或搜尋相關問題。
+

@@ -2,44 +2,53 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>Q2D 檢索服務</title>
+<title>Q2D 智能助手</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 40px; }
-        form { margin-bottom: 20px; }
-        #results { white-space: pre-wrap; }
+        #chat-box { border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: auto; white-space: pre-wrap; }
+        form { margin-top: 10px; }
     </style>
 </head>
 <body>
-    <h1>Q2D 檢索服務</h1>
-    <form id="search-form">
-        <input type="text" id="query" placeholder="輸入查詢字串" size="40" required>
-        <button type="submit">搜尋</button>
+    <h1>Q2D 智能助手</h1>
+    <div id="chat-box"></div>
+    <form id="chat-form">
+        <input type="text" id="message" placeholder="輸入訊息" size="40" required>
+        <button type="submit">送出</button>
     </form>
-    <div id="results"></div>
 
     <script>
-    document.getElementById('search-form').addEventListener('submit', async (e) => {
+    const chatBox = document.getElementById('chat-box');
+    document.getElementById('chat-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const query = document.getElementById('query').value.trim();
-        if (!query) return;
-        document.getElementById('results').textContent = '搜尋中...';
+        const msg = document.getElementById('message').value.trim();
+        if (!msg) return;
+        append('我', msg);
+        document.getElementById('message').value = '';
         try {
-            const resp = await fetch('/api/search', {
+            const resp = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query })
+                body: JSON.stringify({ message: msg })
             });
             const data = await resp.json();
             if (data.error) {
-                document.getElementById('results').textContent = '錯誤：' + data.error;
+                append('錯誤', data.error);
             } else {
-                const lines = data.results.map(r => `【${r.doc_id}】分數: ${r.score.toFixed(4)}\n${r.text}\n`);
-                document.getElementById('results').textContent = lines.join('\n');
+                append('助手', data.response);
             }
         } catch (err) {
-            document.getElementById('results').textContent = '錯誤：' + err;
+            append('錯誤', err);
         }
     });
+
+    function append(sender, text) {
+        const p = document.createElement('p');
+        p.textContent = `${sender}: ${text}`;
+        chatBox.appendChild(p);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
     </script>
 </body>
 </html>

@@ -1,34 +1,44 @@
-from pathlib import Path
+
+"""Flask server providing a simple chat interface to the Gemini agent."""
+
+import os
 from flask import Flask, request, jsonify, render_template
 
-from bm25_retrieval import BM25Retriever, load_index, load_corpus
+from gemini_mcp_client import GeminiMCPAgent
+from mcp_client import MCPClient
 
 app = Flask(__name__)
 
-# Preload index and corpus for fraud dataset
-_INDEX_PATH = Path(__file__).with_name("fraud_index.json")
-_CORPUS_DIR = Path("data") / "fraud"
-_INDEX = load_index(_INDEX_PATH)
-_BM25 = BM25Retriever(_INDEX)
-_DOCS = {doc["id"]: doc["text"] for doc in load_corpus(str(_CORPUS_DIR))}
+# Initialize Gemini agent and MCP server
+_API_KEY = os.getenv("GEMINI_API_KEY")
+if not _API_KEY:
+    raise RuntimeError("GEMINI_API_KEY environment variable is required")
+
+_MCP_CLIENT = MCPClient("mcp_server.py")
+_MCP_CLIENT.start()
+_AGENT = GeminiMCPAgent(_API_KEY, _MCP_CLIENT)
+
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/api/search', methods=['POST'])
-def api_search():
+
+@app.route('/api/chat', methods=['POST'])
+def api_chat():
     data = request.get_json(force=True)
-    query = data.get('query', '').strip()
-    if not query:
-        return jsonify({'error': 'Missing query'}), 400
-    top_k = int(data.get('top_k', 5))
-    results = _BM25.query(query, top_k)
-    formatted = [
-        {"doc_id": doc_id, "score": score, "text": _DOCS.get(doc_id, "")}
-        for score, doc_id in results
-    ]
-    return jsonify({'results': formatted})
+    message = data.get('message', '').strip()
+    if not message:
+        return jsonify({'error': 'Missing message'}), 400
+    try:
+        response = _AGENT.chat(message)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    return jsonify({'response': response})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000)
+    try:
+        app.run(host='0.0.0.0', port=8000)
+    finally:
+        _MCP_CLIENT.stop()
+
