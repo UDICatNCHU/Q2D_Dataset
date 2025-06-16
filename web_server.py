@@ -1,3 +1,4 @@
+
 """Flask server providing a simple chat interface to the Gemini agent."""
 
 import os
@@ -17,9 +18,11 @@ _MCP_CLIENT = MCPClient("mcp_server.py")
 _MCP_CLIENT.start()
 _AGENT = GeminiMCPAgent(_API_KEY, _MCP_CLIENT)
 
+
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/api/chat', methods=['POST'])
 def api_chat():
@@ -38,3 +41,4 @@ if __name__ == '__main__':
         app.run(host='0.0.0.0', port=8000)
     finally:
         _MCP_CLIENT.stop()
+
