@@ -97,6 +97,16 @@ def read_fraud_data(offset: int = 0, limit: int | None = None) -> List[Dict[str,
 
 
 @mcp.tool()
+def read_fraud_queries(offset: int = 0, limit: int | None = None) -> List[Dict[str, object]]:
+    """Return a slice of the fraud queries dataset."""
+    if offset < 0:
+        offset = 0
+    if limit is None or limit <= 0:
+        return _QUERIES[offset:]
+    return _QUERIES[offset : offset + limit]
+
+
+@mcp.tool()
 def test() -> str:
     """Check if the server is running."""
     return "Q2D search server is running"

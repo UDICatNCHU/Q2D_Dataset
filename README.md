@@ -110,6 +110,12 @@ uv pip install -r requirements.txt
 {"tool": "read_fraud_data", "args": {"offset": 0, "limit": 20}}
 ```
 
+若需要查看查詢資料，可使用 `read_fraud_queries`，用法同上：
+
+```bash
+{"tool": "read_fraud_queries", "args": {"offset": 0, "limit": 10}}
+```
+
 ## Gemini MCP 客戶端
 
 若要使用 `gemini_mcp_client.py` 啟動智能助手，請先設定 Google Gemini API 金鑰。建議在專案根目錄建立 `.env` 檔並填入：
