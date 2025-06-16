@@ -131,3 +131,16 @@ python gemini_mcp_client.py
 ```
 
 `.env` 檔已加入 `.gitignore`，不會被納入版本控管。
+
+## 簡易網頁介面
+
+本專案提供 `web_server.py` 以 Flask 建立簡易的查詢網頁。啟動後即可透過瀏覽器輸入查詢並取得檢索結果。
+
+```bash
+# 安裝相依套件
+pip install -r requirements.txt
+# 啟動伺服器
+python web_server.py
+```
+
+預設會在 <http://localhost:8000/> 提供網頁介面。
