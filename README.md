@@ -103,8 +103,8 @@ uv pip install -r requirements.txt
 預設使用 `gemini-2.0-flash` 模型。建議先使用 `search` 觀察檢索結果，
 若結果不足再呼叫 `expand_search`。呼叫時需提供 `query` 與可選的 `top_k` 參數。
 
-此外，`read_fraud_data` 工具現在支援 `offset` 與 `limit` 參數，可分批取回資料以避免
-一次回傳過多內容造成解析問題。例如：
+此外，`read_fraud_data` 工具會直接回傳資料列表，建議搭配
+`offset` 與 `limit` 參數分批取得結果，以避免一次回傳過多內容造成解析問題。例如：
 
 ```bash
 {"tool": "read_fraud_data", "args": {"offset": 0, "limit": 20}}
