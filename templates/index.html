@@ -44,9 +44,21 @@
 
     function append(sender, text) {
         const p = document.createElement('p');
-        p.textContent = `${sender}: ${text}`;
+        p.textContent = `${sender}: `;
         chatBox.appendChild(p);
+        if (sender === '助手') {
+            typeText(p, text);
+        } else {
+            p.textContent += text;
+        }
         chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function typeText(el, text, idx = 0) {
+        if (idx < text.length) {
+            el.textContent += text[idx];
+            setTimeout(() => typeText(el, text, idx + 1), 30);
+        }
     }
 
     </script>
