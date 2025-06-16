@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>Q2D 檢索服務</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        form { margin-bottom: 20px; }
+        #results { white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>Q2D 檢索服務</h1>
+    <form id="search-form">
+        <input type="text" id="query" placeholder="輸入查詢字串" size="40" required>
+        <button type="submit">搜尋</button>
+    </form>
+    <div id="results"></div>
+
+    <script>
+    document.getElementById('search-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const query = document.getElementById('query').value.trim();
+        if (!query) return;
+        document.getElementById('results').textContent = '搜尋中...';
+        try {
+            const resp = await fetch('/api/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query })
+            });
+            const data = await resp.json();
+            if (data.error) {
+                document.getElementById('results').textContent = '錯誤：' + data.error;
+            } else {
+                const lines = data.results.map(r => `【${r.doc_id}】分數: ${r.score.toFixed(4)}\n${r.text}\n`);
+                document.getElementById('results').textContent = lines.join('\n');
+            }
+        } catch (err) {
+            document.getElementById('results').textContent = '錯誤：' + err;
+        }
+    });
+    </script>
+</body>
+</html>
