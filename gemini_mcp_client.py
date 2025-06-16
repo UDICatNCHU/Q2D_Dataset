@@ -85,6 +85,13 @@ class GeminiMCPAgent:
                     "limit": "最多返回的筆數，預設為全部"
                 }
             },
+            "read_fraud_queries": {
+                "description": "讀取詐欺查詢資料，可指定 offset 與 limit",
+                "parameters": {
+                    "offset": "起始索引，預設 0",
+                    "limit": "最多返回的筆數，預設為全部"
+                }
+            },
             "evaluate_fraud": {
                 "description": "評估 BM25 在詐欺查詢上的效能",
                 "parameters": {
@@ -105,6 +112,7 @@ class GeminiMCPAgent:
         json_example_2 = '{"action": "respond", "response": "你的回答"}'
         json_example_3 = '{"action": "use_tool", "tool": "read_fraud_data", "args": {"offset": 0, "limit": 0}, "reasoning": "需要讀取資料集來計算筆數"}'
         json_example_4 = '{"action": "respond", "response": "詐欺是指..."}'
+        json_example_5 = '{"action": "use_tool", "tool": "read_fraud_queries", "args": {"offset": 0, "limit": 5}, "reasoning": "查看範例查詢"}'
 
         return f"""你是一個智能助手，可以幫助使用者查詢和分析詐欺相關資料。
 
@@ -124,6 +132,7 @@ class GeminiMCPAgent:
 - 例子：
 - 使用者問「詐欺資料集有多少筆資料？」→ {json_example_3}
 - 使用者問「什麼是詐欺？」→ {json_example_4}
+- 使用者問「可以列出查詢範例嗎？」→ {json_example_5}
 
 請只回傳 JSON，不要包含其他說明文字."""
 
@@ -257,6 +266,13 @@ class GeminiMCPAgent:
                 # overwhelming the model we truncate the output. If the caller
                 # specifies ``limit`` we respect it up to 20 items; otherwise
                 # show the first 20 records by default.
+                limit = args.get("limit", 20)
+                if not isinstance(limit, int) or limit <= 0 or limit > 20:
+                    limit = 20
+                limited = result[:limit]
+                return json.dumps(limited, ensure_ascii=False, indent=2)
+
+            elif tool_name == "read_fraud_queries":
                 limit = args.get("limit", 20)
                 if not isinstance(limit, int) or limit <= 0 or limit > 20:
                     limit = 20
