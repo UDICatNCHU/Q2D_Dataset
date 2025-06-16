@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+<title>Q2D 智能助手</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        #chat-box { border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: auto; white-space: pre-wrap; }
+        form { margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Q2D 智能助手</h1>
+    <div id="chat-box"></div>
+    <form id="chat-form">
+        <input type="text" id="message" placeholder="輸入訊息" size="40" required>
+        <button type="submit">送出</button>
+    </form>
+
+    <script>
+    const chatBox = document.getElementById('chat-box');
+    document.getElementById('chat-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const msg = document.getElementById('message').value.trim();
+        if (!msg) return;
+        append('我', msg);
+        document.getElementById('message').value = '';
+        try {
+            const resp = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: msg })
+            });
+            const data = await resp.json();
+            if (data.error) {
+                append('錯誤', data.error);
+            } else {
+                append('助手', data.response);
+            }
+        } catch (err) {
+            append('錯誤', err);
+        }
+    });
+
+    function append(sender, text) {
+        const p = document.createElement('p');
+        p.textContent = `${sender}: ${text}`;
+        chatBox.appendChild(p);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+    </script>
+</body>
+</html>

@@ -131,3 +131,17 @@ python gemini_mcp_client.py
 ```
 
 `.env` 檔已加入 `.gitignore`，不會被納入版本控管。
+
+## 簡易網頁介面
+
+`web_server.py` 提供一個基於 Flask 的聊天頁面，可與 Gemini 智能助手互動。啟動前請先設定 `GEMINI_API_KEY` 環境變數。
+
+```bash
+# 安裝相依套件
+pip install -r requirements.txt
+# 設定金鑰並啟動伺服器
+export GEMINI_API_KEY=your_key
+python web_server.py
+```
+
+啟動後瀏覽 <http://localhost:8000/> 即可進行對話，詢問資料集或搜尋相關問題。
