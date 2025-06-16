@@ -253,7 +253,15 @@ class GeminiMCPAgent:
                 return "\n".join(formatted_results)
             
             elif tool_name == "read_fraud_data":
-                return f"📊 取得 {len(result)} 筆詐欺資料記錄"
+                # The server may return a large list of records. To prevent
+                # overwhelming the model we truncate the output. If the caller
+                # specifies ``limit`` we respect it up to 20 items; otherwise
+                # show the first 20 records by default.
+                limit = args.get("limit", 20)
+                if not isinstance(limit, int) or limit <= 0 or limit > 20:
+                    limit = 20
+                limited = result[:limit]
+                return json.dumps(limited, ensure_ascii=False, indent=2)
             
             elif tool_name == "evaluate_fraud":
                 return (f"📈 評估結果：\n"
