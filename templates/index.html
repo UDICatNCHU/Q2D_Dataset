@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-<title>Q2D 智能助手</title>
+    <title>Q2D 智能助手</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background-color: #f8f9fa; }
@@ -10,69 +10,70 @@
     </style>
 </head>
 <body class="bg-light">
-    <div class="container py-4">
+    <div id="app" class="container py-4">
         <h1 class="mb-4">Q2D 智能助手</h1>
-        <div id="chat-box" class="border rounded p-3 mb-3 bg-white"></div>
-        <form id="chat-form" class="input-group">
-            <input type="text" id="message" class="form-control" placeholder="輸入訊息" required>
+        <div id="chat-box" class="border rounded p-3 mb-3 bg-white" ref="chatBox">
+            <p v-for="(msg, i) in messages" :key="i" class="mb-1">
+                <strong :class="senderClass(msg.sender)">{{ msg.sender }}:</strong>
+                <span>{{ msg.text }}</span>
+            </p>
+        </div>
+        <form @submit.prevent="send" class="input-group">
+            <input type="text" v-model="input" class="form-control" placeholder="輸入訊息" required>
             <button class="btn btn-primary" type="submit">送出</button>
         </form>
     </div>
-
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script>
-    const chatBox = document.getElementById('chat-box');
-    document.getElementById('chat-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const msg = document.getElementById('message').value.trim();
-        if (!msg) return;
-        append('我', msg);
-        document.getElementById('message').value = '';
-        try {
-            const resp = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: msg })
-            });
-            const data = await resp.json();
-            if (data.error) {
-                append('錯誤', data.error);
-            } else {
-                append('助手', data.response);
+    const { createApp } = Vue;
+    createApp({
+        data() {
+            return {
+                input: '',
+                messages: []
+            };
+        },
+        methods: {
+            senderClass(sender) {
+                if (sender === '我') return 'text-primary';
+                if (sender === '助手') return 'text-success';
+                return 'text-danger';
+            },
+            async send() {
+                const msg = this.input.trim();
+                if (!msg) return;
+                this.messages.push({ sender: '我', text: msg });
+                this.input = '';
+                try {
+                    const resp = await fetch('/api/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: msg })
+                    });
+                    const data = await resp.json();
+                    if (data.error) {
+                        this.messages.push({ sender: '錯誤', text: data.error });
+                    } else {
+                        const idx = this.messages.length;
+                        this.messages.push({ sender: '助手', text: '' });
+                        this.typeText(idx, data.response);
+                    }
+                } catch (err) {
+                    this.messages.push({ sender: '錯誤', text: err.toString() });
+                }
+            },
+            typeText(index, text, i = 0) {
+                if (i < text.length) {
+                    this.messages[index].text += text[i];
+                    this.$nextTick(() => {
+                        const chatBox = this.$refs.chatBox;
+                        chatBox.scrollTop = chatBox.scrollHeight;
+                    });
+                    setTimeout(() => this.typeText(index, text, i + 1), 30);
+                }
             }
-        } catch (err) {
-            append('錯誤', err);
         }
-    });
-
-    function append(sender, text) {
-        const p = document.createElement('p');
-        p.className = 'mb-1';
-        if (sender === '我') {
-            p.innerHTML = `<strong class="text-primary">${sender}:</strong> ${text}`;
-        } else if (sender === '助手') {
-            const strong = document.createElement('strong');
-            strong.className = 'text-success';
-            strong.textContent = `${sender}: `;
-            p.appendChild(strong);
-            const span = document.createElement('span');
-            p.appendChild(span);
-            typeText(span, text);
-
-        } else {
-            p.innerHTML = `<strong class="text-danger">${sender}:</strong> ${text}`;
-        }
-        chatBox.appendChild(p);
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    function typeText(el, text, idx = 0) {
-        if (idx < text.length) {
-            el.textContent += text[idx];
-            chatBox.scrollTop = chatBox.scrollHeight;
-            setTimeout(() => typeText(el, text, idx + 1), 30);
-        }
-    }
-
+    }).mount('#app');
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
