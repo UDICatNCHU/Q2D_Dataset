@@ -152,5 +152,4 @@ python web_server.py
 ```
 
 啟動後瀏覽 <http://localhost:8000/> 即可進行對話，詢問資料集或搜尋相關問題。
-前端介面採用 [Vue 3](https://vuejs.org/) 以加強訊息更新的即時性與互動效果。
 
