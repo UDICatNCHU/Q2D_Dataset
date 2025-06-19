@@ -3,7 +3,10 @@ import os
 from pathlib import Path
 from typing import List, Dict
 import sys
-import google.generativeai as genai
+try:
+    import google.generativeai as genai
+except Exception:  # pragma: no cover - optional dependency
+    genai = None
 
 from bm25_retrieval import BM25Retriever, load_index, load_corpus
 from score import load_qrels, compute_scores
@@ -61,7 +64,7 @@ _QRELS_PATH = _CORPUS_DIR / "format" / "qrels.json"
 # Configure Gemini model for query expansion
 _GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 _GEMINI_MODEL = None
-if _GEMINI_API_KEY:
+if _GEMINI_API_KEY and genai is not None:
     try:
         genai.configure(api_key=_GEMINI_API_KEY)
         _GEMINI_MODEL = genai.GenerativeModel("gemini-2.0-flash")
