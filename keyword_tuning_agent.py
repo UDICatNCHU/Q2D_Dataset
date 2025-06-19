@@ -1,4 +1,3 @@
-
 """Autonomous keyword tuning agent using the MCP server tools.
 
 This script demonstrates a very small loop where an "agent" observes the
@@ -7,9 +6,10 @@ improve them using the ``search`` and ``expand_search`` tools exposed by the
 MCP server.  Accuracy and MRR are measured after every attempt and the query is
 updated whenever an expansion yields a better score.
 
-"""
 
 import json
+import sys
+
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -40,6 +40,8 @@ def run_expand_search(client: MCPClient, query: str) -> Tuple[str, List[int]]:
     resp = client.call_tool("expand_search", {"query": query, "top_k": TOP_K})
     if "error" in resp:
         # Gemini might be unavailable; fall back to original query
+        print(f"Expansion failed: {resp['error']}", file=sys.stderr)
+
         expanded_query = query
         docs = run_search(client, query)
     else:
@@ -47,7 +49,6 @@ def run_expand_search(client: MCPClient, query: str) -> Tuple[str, List[int]]:
         expanded_query = result.get("expanded_query", query)
         docs = [item["doc_id"] for item in result.get("results", [])]
     return expanded_query, docs
-
 
 
 def evaluate_single(qid: int, rel_doc: int, docs: List[int]) -> Tuple[float, float]:
