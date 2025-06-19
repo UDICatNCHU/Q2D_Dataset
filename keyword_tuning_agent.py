@@ -1,3 +1,4 @@
+
 """Autonomous keyword tuning agent using the MCP server tools.
 
 This script demonstrates a very small loop where an "agent" observes the
@@ -5,6 +6,7 @@ retrieval results of the first three test queries and repeatedly tries to
 improve them using the ``search`` and ``expand_search`` tools exposed by the
 MCP server.  Accuracy and MRR are measured after every attempt and the query is
 updated whenever an expansion yields a better score.
+
 """
 
 import json
@@ -45,6 +47,7 @@ def run_expand_search(client: MCPClient, query: str) -> Tuple[str, List[int]]:
         expanded_query = result.get("expanded_query", query)
         docs = [item["doc_id"] for item in result.get("results", [])]
     return expanded_query, docs
+
 
 
 def evaluate_single(qid: int, rel_doc: int, docs: List[int]) -> Tuple[float, float]:
@@ -100,6 +103,7 @@ def main() -> None:
             tuned_query, docs = refine_query(client, qid, text, rel_doc)
             preds_after[qid] = docs
             expansions[qid] = (text, tuned_query)
+
 
     # Only evaluate the queries we processed
     subset_qrels = {qid: qrels[qid] for qid in preds_before.keys() if qid in qrels}

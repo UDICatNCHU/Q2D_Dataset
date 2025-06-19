@@ -132,11 +132,16 @@ def expand_search(query: str, top_k: int = 5) -> Dict[str, object]:
         raise RuntimeError("Gemini model is not configured")
 
     prompt = (
-        "請擴充以下查詢，列出可能的同義詞或相關關鍵字，以空格分隔：" f"{query}"
+        "請擴充以下查詢為單行關鍵字列表，僅輸出空格分隔的關鍵字，"
+        "不要任何額外說明："
+        f"{query}"
     )
     try:
         resp = _GEMINI_MODEL.generate_content(prompt)
         expanded = resp.text.strip()
+        # 若模型仍回傳多行內容，僅取最後一行以避免額外說明
+        if "\n" in expanded:
+            expanded = expanded.splitlines()[-1].strip()
     except Exception as e:
         raise RuntimeError(f"Gemini expansion failed: {e}")
 
