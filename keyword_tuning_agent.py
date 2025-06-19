@@ -5,7 +5,7 @@ retrieval results of the first three test queries and repeatedly tries to
 improve them using the ``search`` and ``expand_search`` tools exposed by the
 MCP server.  Accuracy and MRR are measured after every attempt and the query is
 updated whenever an expansion yields a better score.
-
+"""
 
 import json
 import sys
