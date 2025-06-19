@@ -5,10 +5,11 @@ retrieval results of the first three test queries and repeatedly tries to
 improve them using the ``search`` and ``expand_search`` tools exposed by the
 MCP server.  Accuracy and MRR are measured after every attempt and the query is
 updated whenever an expansion yields a better score.
-"""
+
 
 import json
 import sys
+
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -40,6 +41,7 @@ def run_expand_search(client: MCPClient, query: str) -> Tuple[str, List[int]]:
     if "error" in resp:
         # Gemini might be unavailable; fall back to original query
         print(f"Expansion failed: {resp['error']}", file=sys.stderr)
+
         expanded_query = query
         docs = run_search(client, query)
     else:
@@ -102,6 +104,7 @@ def main() -> None:
             tuned_query, docs = refine_query(client, qid, text, rel_doc)
             preds_after[qid] = docs
             expansions[qid] = (text, tuned_query)
+
 
     # Only evaluate the queries we processed
     subset_qrels = {qid: qrels[qid] for qid in preds_before.keys() if qid in qrels}
