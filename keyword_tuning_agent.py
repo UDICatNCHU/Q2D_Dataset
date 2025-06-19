@@ -1,9 +1,12 @@
-"""Keyword tuning agent using the MCP server tools.
 
-This script evaluates retrieval metrics on the first three fraud queries using
-BM25 search provided by the MCP server. It first issues the original queries
-via the ``search`` tool and then tries the ``expand_search`` tool to expand the
-query through Gemini. Accuracy and MRR are reported before and after expansion.
+"""Autonomous keyword tuning agent using the MCP server tools.
+
+This script demonstrates a very small loop where an "agent" observes the
+retrieval results of the first three test queries and repeatedly tries to
+improve them using the ``search`` and ``expand_search`` tools exposed by the
+MCP server.  Accuracy and MRR are measured after every attempt and the query is
+updated whenever an expansion yields a better score.
+
 """
 
 import json
@@ -46,6 +49,36 @@ def run_expand_search(client: MCPClient, query: str) -> Tuple[str, List[int]]:
     return expanded_query, docs
 
 
+
+def evaluate_single(qid: int, rel_doc: int, docs: List[int]) -> Tuple[float, float]:
+    """Return accuracy and MRR for one query."""
+    qrels = {qid: rel_doc}
+    preds = {qid: docs}
+    return compute_scores(qrels, preds)
+
+
+def refine_query(
+    client: MCPClient, qid: int, query: str, rel_doc: int, max_iter: int = 3
+) -> Tuple[str, List[int]]:
+    """Iteratively expand the query if it improves MRR."""
+
+    best_query = query
+    docs = run_search(client, query)
+    best_acc, best_mrr = evaluate_single(qid, rel_doc, docs)
+
+    for _ in range(max_iter):
+        expanded, new_docs = run_expand_search(client, best_query)
+        acc, mrr = evaluate_single(qid, rel_doc, new_docs)
+        if mrr > best_mrr or (mrr == best_mrr and acc > best_acc):
+            best_query = expanded
+            docs = new_docs
+            best_acc, best_mrr = acc, mrr
+        else:
+            break
+
+    return best_query, docs
+
+
 def main() -> None:
     queries = load_queries()
     qrels = load_qrels(str(QRELS_PATH))
@@ -58,11 +91,19 @@ def main() -> None:
         for q in queries[:NUM_QUERIES]:
             qid = q["id"]
             text = q["text"]
+            rel_doc = qrels.get(qid)
 
             preds_before[qid] = run_search(client, text)
-            expanded, docs = run_expand_search(client, text)
+
+            if rel_doc is None:
+                preds_after[qid] = preds_before[qid]
+                expansions[qid] = (text, text)
+                continue
+
+            tuned_query, docs = refine_query(client, qid, text, rel_doc)
             preds_after[qid] = docs
-            expansions[qid] = (text, expanded)
+            expansions[qid] = (text, tuned_query)
+
 
     # Only evaluate the queries we processed
     subset_qrels = {qid: qrels[qid] for qid in preds_before.keys() if qid in qrels}
