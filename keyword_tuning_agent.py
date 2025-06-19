@@ -1,4 +1,6 @@
 
+import sys
+        print(f"Expansion failed: {resp['error']}", file=sys.stderr)
 """Autonomous keyword tuning agent using the MCP server tools.
 
 This script demonstrates a very small loop where an "agent" observes the
